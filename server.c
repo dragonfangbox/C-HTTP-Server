@@ -7,7 +7,27 @@
 #include <sys/sendfile.h>
 #include <arpa/inet.h>
 
+void SendResponse(int fileSize, char* fileType, FILE* openedFile, int* client) 
+{
+	char* fileContent = (char *)malloc(fileSize + 1);
+	int bytesRead = fread(fileContent, 1, fileSize, openedFile);
+	fileContent[bytesRead] = '\0';
+	
+	char response[1024]; 
+	snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\n"
+						"Content-Type: text/%s\r\n"
+						"Content-Length: %d\r\n"
+						"\r\n"
+						"%s\r\n", fileType, fileSize ,fileContent); 
+
+	printf("sending response\n\n %s\n", response);			
+	send(*client, response, strlen(response), 0);
+
+	free(fileContent);
+}
+
 int main() {
+	const char TYPES[2][5] = {"html", "js"};
 
 	int testSocket = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -46,12 +66,27 @@ int main() {
 			return 1;
 		}
 	
+	
 		char buffer[512] = {0};
 		recv(client, buffer, 512, 0);
-		printf("%s\n", buffer);
+//		printf("%s\n", buffer);
 
 		char* fileName = buffer + 5;
 		*strchr(fileName, ' ') = 0;
+		printf("%s\n", fileName);
+
+		char* fileType;
+		for(size_t i = 0; i < sizeof(TYPES) / sizeof(TYPES[0]); i++) {
+			char* type = strstr(buffer, TYPES[i]);
+			if(type != NULL) {
+				if(strcmp(type, "js") == 0) {
+					fileType = "javascript";
+				} else {
+					fileType = type;
+				}
+			}
+		}
+		printf("type of file: %s\n", fileType);
 
 		FILE* openedFile = fopen(fileName, "r");
 		if(openedFile == NULL) {
@@ -66,21 +101,8 @@ int main() {
 		fileSize = ftell(openedFile);
 		fseek(openedFile, 0, SEEK_SET);
 
-		char* fileContent = (char *)malloc(fileSize + 1);
-		int bytesRead = fread(fileContent, 1, fileSize, openedFile);
-		fileContent[bytesRead] = '\0';
+		SendResponse(fileSize, fileType, openedFile, &client);
 
-		char response[1024]; 
-		snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\n"
-							"Content-Type: text/html\r\n"
-							"Content-Length: %d\r\n"
-							"\r\n"
-							"%s\r\n", fileSize ,fileContent); 
-
-		printf("sending response\n");			
-		send(client, response, strlen(response), 0);
-
-		free(fileContent);
 		fclose(openedFile);
 		close(client);
 	}
