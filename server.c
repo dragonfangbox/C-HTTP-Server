@@ -14,11 +14,11 @@ void SendResponse(int fileSize, char* fileType, FILE* openedFile, int* client)
 	fileContent[bytesRead] = '\0';
 	
 	char response[1024]; 
-		snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\n"
-								"Content-Type: text/%s\r\n"
-								"Content-Length: %d\r\n"
-								"\r\n"
-							"%s\r\n", fileType, fileSize ,fileContent); 
+	snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\n"
+						"Content-Type: text/%s\r\n"
+						"Content-Length: %d\r\n"
+						"\r\n"
+						"%s\r\n", fileType, fileSize ,fileContent); 
 
 	printf("sending response\n\n %s\n", response);			
 	send(*client, response, strlen(response), 0);
