@@ -20,7 +20,7 @@ void SendResponse(int fileSize, char* fileType, FILE* openedFile, int* client)
 						"\r\n"
 						"%s\r\n", fileType, fileSize ,fileContent); 
 
-	printf("sending response\n\n %s\n", response);			
+//	printf("sending response\n\n %s\n", response);			
 	send(*client, response, strlen(response), 0);
 
 	free(fileContent);
@@ -69,7 +69,7 @@ int main() {
 	
 		char buffer[1024] = {0};
 		recv(client, buffer, 1024, 0);
-//		printf("%s\n", buffer);
+		//printf("%s\n", buffer);
 
 		char* fileName = buffer + 5;
 		*strchr(fileName, ' ') = 0;
